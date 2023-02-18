@@ -1,5 +1,11 @@
 #include "mainwindow.h"
 
+constexpr string HTTP_PORT = "80";
+constexpr string HTTPS_PORT = "443";
+constexpr string HTTP_SCHEMA = "http";
+constexpr string HTTPS_SCHEMA = "https";
+constexpr int MAX_PORT = 65536;
+
 class Url
 {
 public:
@@ -20,14 +26,14 @@ public:
         if (url.empty())
             return;
 
-        if (url.substr(0, 8) == "https://")
-            Schema = "https";
-        else if (url.substr(0, 7) == "http://")
-            Schema = "http";
+        if (url.substr(0, 8) == HTTPS_SCHEMA + "://")
+            Schema = HTTPS_SCHEMA;
+        else if (url.substr(0, 7) == HTTP_SCHEMA + "://")
+            Schema = HTTP_SCHEMA;
         else
             throw "Unknown schema";
 
-        url = url.substr(Schema == "http" ? 7 : 8);
+        url = url.substr(Schema == HTTP_SCHEMA ? 7 : 8);
 
         size_t pos = url.find("/");
         if (pos == string::npos)
@@ -43,12 +49,7 @@ public:
 
         pos = Host.rfind(":");
         if (pos == string::npos)
-        {
-            if (Schema == "http")
-                Port = "80";
-            else
-                Port = "443";
-        }
+           Port = Schema == HTTP_SCHEMA ? Port = HTTP_PORT : HTTPS_PORT;
         else
         {
             Port = url.substr(pos + 1);
@@ -62,7 +63,7 @@ public:
                 throw "Invalid port";
             }
 
-            if (!port || port >= 65536)
+            if (!port || port >= MAX_PORT)
                 throw string("Invalid port");
 
             Target = Target.substr(0, Host.rfind(":") + 1);
@@ -381,7 +382,7 @@ void MainWindow::HttpRequest(const std::string& type, const std::string& url, co
     };
 
     net::io_context ioc;
-    if (u.Schema == "http")
+    if (u.Schema == HTTP_SCHEMA)
     {
         shared_ptr<session> ptr = std::make_shared<session>(ioc);
         ptr->run(u.Host.data(), u.Port.data(), u.Target.data(), 11, type, body, headers);

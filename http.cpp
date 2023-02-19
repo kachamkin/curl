@@ -6,6 +6,31 @@ constexpr string HTTP_SCHEMA = "http";
 constexpr string HTTPS_SCHEMA = "https";
 constexpr int MAX_PORT = 65536;
 
+void rtrim(string& s)
+{
+    s.erase(find_if(s.rbegin(), s.rend(), [](char ch) {
+        return !isspace(ch);
+        }).base(), s.end());
+}
+
+void ltrim(string& s)
+{
+    s.erase(s.begin(), find_if(s.begin(), s.end(), [](char ch) {
+        return !isspace(ch);
+        }));
+}
+
+void toLower(string& s)
+{
+    transform(s.begin(), s.end(), s.begin(), [](char ch) { return tolower(ch);});
+}
+
+void trim(string& s)
+{
+    ltrim(s);
+    rtrim(s);
+}
+
 class Url
 {
 public:
@@ -23,6 +48,9 @@ public:
 
     void Parse(string url)
     {
+        toLower(url);
+        trim(url);
+
         if (url.empty())
             return;
 
@@ -43,7 +71,7 @@ public:
         }
         else
         {
-            Target = url.substr(pos + 1);
+            Target = url.substr(pos);
             Host = url.substr(0, pos);
         }
 
@@ -227,7 +255,7 @@ public:
         if(ec)
             return fail(ec, "read");
 
-       result = res_.body();
+       result = to_string(res_.result_int()) + " " + res_.reason().to_string() +  "\n=========================================\n\n" + res_.body();
        for (auto const& h : res_.base())
             res_headers += h.name_string().to_string() + ": " + h.value().to_string() + "\n";
 
@@ -332,8 +360,7 @@ public:
                          );
     }
 
-    void
-    on_write(beast::error_code ec, std::size_t bytes_transferred)
+    void on_write(beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
         if(ec)
@@ -356,7 +383,7 @@ public:
         if(ec)
             return fail(ec, "read");
 
-        result = res_.body();
+        result = to_string(res_.result_int()) + " " + res_.reason().to_string() +  "\n=========================================\n\n" + res_.body();
         for (auto const& h : res_.base())
             res_headers += h.name_string().to_string() + ": " + h.value().to_string() + "\n";
 

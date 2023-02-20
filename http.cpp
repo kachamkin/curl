@@ -1,35 +1,5 @@
 #include "mainwindow.h"
-
-constexpr string HTTP_PORT = "80";
-constexpr string HTTPS_PORT = "443";
-constexpr string HTTP_SCHEMA = "http";
-constexpr string HTTPS_SCHEMA = "https";
-constexpr int MAX_PORT = 65536;
-
-void rtrim(string& s)
-{
-    s.erase(find_if(s.rbegin(), s.rend(), [](char ch) {
-        return !isspace(ch);
-        }).base(), s.end());
-}
-
-void ltrim(string& s)
-{
-    s.erase(s.begin(), find_if(s.begin(), s.end(), [](char ch) {
-        return !isspace(ch);
-        }));
-}
-
-void toLower(string& s)
-{
-    transform(s.begin(), s.end(), s.begin(), [](char ch) { return tolower(ch);});
-}
-
-void trim(string& s)
-{
-    ltrim(s);
-    rtrim(s);
-}
+#include "consts.h"
 
 class Url
 {
@@ -203,7 +173,7 @@ public:
         if(ec)
             return fail(ec, "connect");
 
-        stream_.async_handshake(
+       stream_.async_handshake(
                                 ssl::stream_base::client,
                                 std::bind(
                                             &ssl_session::on_handshake,
@@ -332,7 +302,7 @@ public:
         if(ec)
             return fail(ec, "resolve");
 
-        stream_.expires_after(std::chrono::seconds(30));
+        stream_.expires_after(TIMEOUT);
 
         stream_.async_connect(
                                 results,
@@ -348,7 +318,7 @@ public:
         if(ec)
             return fail(ec, "connect");
 
-        stream_.expires_after(std::chrono::seconds(30));
+        stream_.expires_after(TIMEOUT);
 
         http::async_write(
                             stream_,
@@ -394,9 +364,8 @@ public:
     }
 };
 
-void MainWindow::HttpRequest(const std::string& type, const std::string& url, const std::string& body, const std::unordered_map<string,string>& headers)
+void MainWindow::HttpRequest(const std::string& type, const std::string& url, const std::string& body, const std::unordered_map<string, string>& headers)
 {
-
     Url u;
     try
     {
@@ -408,20 +377,31 @@ void MainWindow::HttpRequest(const std::string& type, const std::string& url, co
        return;
     };
 
+    if (u.Host.empty())
+        return;
+
     net::io_context ioc;
     if (u.Schema == HTTP_SCHEMA)
     {
-        shared_ptr<session> ptr = std::make_shared<session>(ioc);
+        shared_ptr<session> ptr = make_shared<session>(ioc);
         ptr->run(u.Host.data(), u.Port.data(), u.Target.data(), 11, type, body, headers);
-        ioc.run();
+        ioc.run_for(TIMEOUT);
+
+        if (ptr->result.empty() && ptr->res_headers.empty())
+            ptr->result = "Timeout expired";
+
         OnRequest(ptr->result, ptr->res_headers);
     }
     else
     {
         ssl::context ctx{ssl::context::sslv23_client};
-        shared_ptr<ssl_session> ptr = std::make_shared<ssl_session>(ioc, ctx);
+        shared_ptr<ssl_session> ptr = make_shared<ssl_session>(ioc, ctx);
         ptr->run(u.Host.data(), u.Port.data(), u.Target.data(), 11, type, body, headers);
-        ioc.run();
+        ioc.run_for(TIMEOUT);
+
+        if (ptr->result.empty() && ptr->res_headers.empty())
+            ptr->result = "Timeout expired";
+
         OnRequest(ptr->result, ptr->res_headers);
     }
 }

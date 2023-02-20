@@ -33,7 +33,8 @@ unordered_map<string, string> getHeaders(const QString& headers)
 
 void MainWindow::on_Send_clicked()
 {
-   HttpRequest(ui->Type->currentText().toStdString(), ui->URL->text().toStdString(), ui->RequestBody->toPlainText().toStdString(), getHeaders(ui->RequestHeaders->toPlainText()));
+    ui->ResponseBody->setPlainText("");
+    HttpRequest(ui->Type->currentText().toStdString(), ui->URL->text().toStdString(), ui->RequestBody->toPlainText().toStdString(), getHeaders(ui->RequestHeaders->toPlainText()));
 }
 
 void MainWindow::OnRequest(const string& result, const string& headers)
@@ -41,5 +42,3 @@ void MainWindow::OnRequest(const string& result, const string& headers)
     ui->ResponseBody->setPlainText(result.data());
     ui->ResponseHeaders->setPlainText(headers.data());
 }
-
-

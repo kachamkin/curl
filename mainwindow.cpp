@@ -8,9 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     ui->Type->addItems({"GET", "POST", "PUT", "PATCH", "OPTIONS", "CONNECT", "HEAD", "TRACE", "DELETE"});
-
-
-}
+ }
 
 MainWindow::~MainWindow()
 {
@@ -34,11 +32,33 @@ unordered_map<string, string> getHeaders(const QString& headers)
 void MainWindow::on_Send_clicked()
 {
     ui->ResponseBody->setPlainText("");
-    HttpRequest(ui->Type->currentText().toStdString(), ui->URL->text().toStdString(), ui->RequestBody->toPlainText().toStdString(), getHeaders(ui->RequestHeaders->toPlainText()));
+    HttpRequest(ui->Type->currentText().toStdString(), ui->URL->currentText().toStdString(), ui->RequestBody->toPlainText().toStdString(), getHeaders(ui->RequestHeaders->toPlainText()));
 }
 
 void MainWindow::OnRequest(const string& result, const string& headers)
 {
     ui->ResponseBody->setPlainText(result.data());
     ui->ResponseHeaders->setPlainText(headers.data());
+
+    bool found = false;
+    QString ct = ui->URL->currentText();
+    for (int i = 0; i < ui->URL->count(); i++)
+    {
+        if (ui->URL->itemText(i) == ct)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        ui->URL->addItem(ct);
+        ui->URL->model()->sort(0);
+    }
+}
+
+void MainWindow::on_URL_currentIndexChanged(int index)
+{
+    on_Send_clicked();
 }

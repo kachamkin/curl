@@ -93,7 +93,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="URL">
+        <widget class="QComboBox" name="URL">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -105,6 +105,9 @@
            <width>0</width>
            <height>0</height>
           </size>
+         </property>
+         <property name="editable">
+          <bool>true</bool>
          </property>
          <property name="placeholderText">
           <string>URL</string>
@@ -161,6 +164,12 @@
       </property>
       <property name="text">
        <string>Send</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+      <property name="default">
+       <bool>true</bool>
       </property>
       <property name="flat">
        <bool>false</bool>
